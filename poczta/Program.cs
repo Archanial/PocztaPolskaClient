@@ -71,4 +71,9 @@ app.MapGet("/getMaxShipments", () => app.Services.GetRequiredService<IPostApi>()
     .WithName("getMaxShipments")
     .WithOpenApi();
 
+app.MapPost("/getSingleShipmentByBarCode", (byte[] imageDate) =>
+        app.Services.GetRequiredService<IPostApi>().GetSingleShipmentByBarCode(imageDate))
+    .WithName("getSingleShipmentByBarCode")
+    .WithOpenApi();
+
 app.Run();
