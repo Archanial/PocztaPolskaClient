@@ -1,11 +1,12 @@
 ﻿using System.ServiceModel;
+using Microsoft.Extensions.Options;
 using poczta.Sledzenie;
 
 namespace poczta;
 
-public sealed class PostClient(SledzeniePortTypeClient client) : IPostClient
+public sealed class PostClient(SledzeniePortTypeClient client, IOptions<ApiCredentials> credentials) : IPostClient
 {
-    private static readonly SecurityHeader SecurityHeader = new("sledzeniepp", "PPSA");
+    private static SecurityHeader? _securityHeader;
     
     public Task<witajResponse> GetWelcomeMessage(string name) 
         => ExecuteWithSecurityHeader(() => client.witajAsync(name));
@@ -37,9 +38,11 @@ public sealed class PostClient(SledzeniePortTypeClient client) : IPostClient
 
     private Task<T> ExecuteWithSecurityHeader<T>(Func<Task<T>> action)
     {
+        _securityHeader ??= new SecurityHeader(credentials.Value.Username, credentials.Value.Password);
+        
         using var _ = new OperationContextScope(client.InnerChannel);
         var messageHeadersElement = OperationContext.Current.OutgoingMessageHeaders;
-        messageHeadersElement.Add(SecurityHeader);
+        messageHeadersElement.Add(_securityHeader);
         return action();
     }
 }

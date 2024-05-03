@@ -32,4 +32,7 @@ public interface IPostApi
 
     [OperationContract]
     Task<int> GetMaxShipments();
+    
+    [OperationContract]
+    Task<Przesylka> GetSingleShipmentByBarCode(byte[] image);
 }

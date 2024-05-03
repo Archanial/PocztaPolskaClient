@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Options;
 using poczta;
 using poczta.Sledzenie;
 using SoapCore;
@@ -12,14 +13,17 @@ builder.Services.AddSoapCore();
 builder.Services.AddSingleton<SledzeniePortTypeClient>();
 builder.Services.AddTransient<IPostClient, PostClient>();
 builder.Services.AddTransient<IPostApi, PostApi>();
-builder.Services.AddSoapWsSecurityFilter("sledzeniepp", "PPSA");
+builder.Services.AddSoapWsSecurityFilter(builder.Configuration.GetSection("Username").Value,
+    builder.Configuration.GetSection("Password").Value);
+builder.Services.Configure<ApiCredentials>(builder.Configuration.GetSection("ApiCredentials"));
 
 var app = builder.Build();
 
 // Add credentials to the client
+var credentials = app.Services.GetRequiredService<IOptions<ApiCredentials>>().Value;
 var client = app.Services.GetRequiredService<SledzeniePortTypeClient>();
-client.ClientCredentials.UserName.UserName = "sledzeniepp";
-client.ClientCredentials.UserName.Password = "PPSA";
+client.ClientCredentials.UserName.UserName = credentials.Username;
+client.ClientCredentials.UserName.Password = credentials.Password;
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -31,7 +35,7 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseSoapEndpoint<IPostApi>(path: "/PostApi.svc", new SoapEncoderOptions());
 
-app.MapGet("/welcome", () => app.Services.GetRequiredService<IPostApi>().GetWelcomeMessage("test"))
+app.MapGet("/welcome", (string name) => app.Services.GetRequiredService<IPostApi>().GetWelcomeMessage(name))
     .WithName("welcome")
     .WithOpenApi();
 app.MapGet("/version", () => app.Services.GetRequiredService<IPostApi>().GetVersion())

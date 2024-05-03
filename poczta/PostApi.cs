@@ -1,5 +1,8 @@
 ﻿using System.Globalization;
 using poczta.Sledzenie;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
+using ZXing.ImageSharp;
 
 namespace poczta;
 
@@ -62,6 +65,22 @@ public sealed class PostApi(IPostClient client) : IPostApi
     public async Task<int> GetMaxShipments()
     {
         var response = await client.GetMaxShipments();
+        return response.@return;
+    }
+
+    public async Task<Przesylka> GetSingleShipmentByBarCode(byte[] image)
+    {
+        var reader = new BarcodeReader<Rgba32>();
+        using var ms = new MemoryStream(image);
+        var bitmap = Image.Load<Rgba32>(image);
+        var decodeResult = reader.Decode(bitmap);
+        if (decodeResult == null)
+            throw new ArgumentException("Cannot parse image");
+
+        if (string.IsNullOrEmpty(decodeResult.Text))
+            throw new ArgumentException("Empty or missing code");
+
+        var response = await client.CheckSingleShipment(decodeResult.Text);
         return response.@return;
     }
 }
