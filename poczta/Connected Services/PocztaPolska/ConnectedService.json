@@ -1,0 +1,23 @@
+{
+  "providerId": "Microsoft.Tools.ServiceModel.Svcutil",
+  "version": "2.1.0",
+  "ExtendedData": {
+    "inputs": [
+      "https://tt.poczta-polska.pl/Sledzenie/services/Sledzenie?wsdl"
+    ],
+    "namespaceMappings": [
+      "*, poczta.Sledzenie"
+    ],
+    "outputFile": "PocztaPolska.cs",
+    "references": [
+      "Microsoft.AspNetCore.OpenApi, {Microsoft.AspNetCore.OpenApi, 8.0.0}",
+      "Microsoft.OpenApi, {Microsoft.OpenApi, 1.4.3}",
+      "Swashbuckle.AspNetCore.Swagger, {Swashbuckle.AspNetCore.Swagger, 6.4.0}",
+      "Swashbuckle.AspNetCore.SwaggerGen, {Swashbuckle.AspNetCore.SwaggerGen, 6.4.0}",
+      "Swashbuckle.AspNetCore.SwaggerUI, {Swashbuckle.AspNetCore.SwaggerUI, 6.4.0}"
+    ],
+    "serializerMode": "XmlSerializer",
+    "targetFramework": "net8.0",
+    "typeReuseMode": "All"
+  }
+}
