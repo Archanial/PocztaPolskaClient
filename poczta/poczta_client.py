@@ -268,22 +268,3 @@ method_urls = {
 
 initialize()
 mainLoop()
-
- 
-# make the service call
-#response = client.service.GetProducts()
- 
-# print the result
-#print(response)
-
-# Define the required namespaces
-#client.wsdl.types.prefix_map['wsse'] = 'http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd'
-#client.wsdl.types.prefix_map['wsu'] = 'http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd'
-
-# try:
-#    response = client.service.GetPhoto()
-#    #print(response)
-#    image = Image.open(io.BytesIO(response))
-#    image.show()
-# except Exception as e:
-#    print(e)

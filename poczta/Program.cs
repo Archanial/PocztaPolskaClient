@@ -13,8 +13,8 @@ builder.Services.AddSoapCore();
 builder.Services.AddSingleton<SledzeniePortTypeClient>();
 builder.Services.AddTransient<IPostClient, PostClient>();
 builder.Services.AddTransient<IPostApi, PostApi>();
-builder.Services.AddSoapWsSecurityFilter(builder.Configuration.GetSection("Username").Value,
-    builder.Configuration.GetSection("Password").Value);
+builder.Services.AddSoapWsSecurityFilter(builder.Configuration.GetSection("ApiUsername").Value,
+    builder.Configuration.GetSection("ApiPassword").Value);
 builder.Services.Configure<ApiCredentials>(builder.Configuration.GetSection("ApiCredentials"));
 
 var app = builder.Build();
@@ -71,8 +71,8 @@ app.MapGet("/getMaxShipments", () => app.Services.GetRequiredService<IPostApi>()
     .WithName("getMaxShipments")
     .WithOpenApi();
 
-app.MapPost("/getSingleShipmentByBarCode", (byte[] imageDate) =>
-        app.Services.GetRequiredService<IPostApi>().GetSingleShipmentByBarCode(imageDate))
+app.MapPost("/getSingleShipmentByBarCode", (byte[] imageData) =>
+        app.Services.GetRequiredService<IPostApi>().GetSingleShipmentByBarCode(imageData))
     .WithName("getSingleShipmentByBarCode")
     .WithOpenApi();
 
