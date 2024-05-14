@@ -70,7 +70,6 @@ app.MapPost("/checkLocalShipmentsByDate",
 app.MapGet("/getMaxShipments", () => app.Services.GetRequiredService<IPostApi>().GetMaxShipments())
     .WithName("getMaxShipments")
     .WithOpenApi();
-
 app.MapPost("/getSingleShipmentByBarCode", (byte[] imageData) =>
         app.Services.GetRequiredService<IPostApi>().GetSingleShipmentByBarCode(imageData))
     .WithName("getSingleShipmentByBarCode")

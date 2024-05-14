@@ -18,9 +18,7 @@ public interface IPostClient
 
     Task<sprawdzPrzesylkiOdDoResponse> CheckShipmentsByDate(string[] numbers, string startDate, string endDate);
 
-    Task<sprawdzPrzesylkiOdDoPlResponse> CheckLocalShipmentsByDate(string[] numbers,
-        string startDate,
-        string endDate);
+    Task<sprawdzPrzesylkiOdDoPlResponse> CheckLocalShipmentsByDate(string[] numbers, string startDate, string endDate);
 
     Task<maksymalnaLiczbaPrzesylekResponse> GetMaxShipments();
 }
