@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authentication.Certificate;
 using Microsoft.Extensions.Options;
 using poczta;
 using poczta.Sledzenie;
@@ -13,9 +14,16 @@ builder.Services.AddSoapCore();
 builder.Services.AddSingleton<SledzeniePortTypeClient>();
 builder.Services.AddTransient<IPostClient, PostClient>();
 builder.Services.AddTransient<IPostApi, PostApi>();
+builder.Services.AddAuthentication(CertificateAuthenticationDefaults.AuthenticationScheme).AddCertificate();
 builder.Services.AddSoapWsSecurityFilter(builder.Configuration.GetSection("ApiUsername").Value,
     builder.Configuration.GetSection("ApiPassword").Value);
 builder.Services.Configure<ApiCredentials>(builder.Configuration.GetSection("ApiCredentials"));
+var allowedAddresses = builder.Configuration.GetSection("AllowedAddresses").Get<AllowedAddresses>();
+builder.Services.AddSoapMessageProcessor(new WhitelistHandler(allowedAddresses ?? new AllowedAddresses
+{
+    IsEnabled = false,
+    Addresses = []
+}));
 
 var app = builder.Build();
 
@@ -33,6 +41,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseAuthentication();
 app.UseSoapEndpoint<IPostApi>(path: "/PostApi.svc", new SoapEncoderOptions());
 
 app.MapGet("/welcome", (string name) => app.Services.GetRequiredService<IPostApi>().GetWelcomeMessage(name))
