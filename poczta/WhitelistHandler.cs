@@ -17,6 +17,7 @@ public sealed class WhitelistHandler(AllowedAddresses whitelist) : ISoapMessageP
 
     private bool IsAddressAllowed(string address)
     {
-        return !whitelist.IsEnabled || whitelist.Addresses.Contains(address);
+        // ReSharper disable once ConditionalAccessQualifierIsNonNullableAccordingToAPIContract
+        return !whitelist.IsEnabled || (whitelist.Addresses?.Contains(address) ?? false);
     }
 }

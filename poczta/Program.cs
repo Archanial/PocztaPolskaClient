@@ -1,20 +1,49 @@
-using Microsoft.AspNetCore.Authentication.Certificate;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.Extensions.Options;
+using Microsoft.OpenApi.Models;
 using poczta;
 using poczta.Sledzenie;
 using SoapCore;
 
 var builder = WebApplication.CreateBuilder(args);
-
-// Add services to the container.
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+}).AddCookie();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(option =>
+{
+    option.SwaggerDoc("v1", new OpenApiInfo { Title = "Poczta API", Version = "v1" });
+    option.AddSecurityDefinition("basic", new OpenApiSecurityScheme
+    {
+        Type = SecuritySchemeType.Http,
+        Scheme = "basic",
+        In = ParameterLocation.Header,
+        Name = "Authorization",
+        Description = "Input your username and password to access this API"
+    });
+
+    option.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "basic"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
+});
 builder.Services.AddSoapCore();
 builder.Services.AddSingleton<SledzeniePortTypeClient>();
 builder.Services.AddTransient<IPostClient, PostClient>();
 builder.Services.AddTransient<IPostApi, PostApi>();
-builder.Services.AddAuthentication(CertificateAuthenticationDefaults.AuthenticationScheme).AddCertificate();
+//builder.Services.AddAuthentication(CertificateAuthenticationDefaults.AuthenticationScheme).AddCertificate();
 builder.Services.AddSoapWsSecurityFilter(builder.Configuration.GetSection("ApiUsername").Value,
     builder.Configuration.GetSection("ApiPassword").Value);
 builder.Services.Configure<ApiCredentials>(builder.Configuration.GetSection("ApiCredentials"));
@@ -25,14 +54,8 @@ builder.Services.AddSoapMessageProcessor(new WhitelistHandler(allowedAddresses ?
     Addresses = []
 }));
 
+builder.Services.AddControllers();
 var app = builder.Build();
-
-// Add credentials to the client
-var credentials = app.Services.GetRequiredService<IOptions<ApiCredentials>>().Value;
-var client = app.Services.GetRequiredService<SledzeniePortTypeClient>();
-client.ClientCredentials.UserName.UserName = credentials.Username;
-client.ClientCredentials.UserName.Password = credentials.Password;
-
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
@@ -40,48 +63,17 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseMiddleware<BasicAuthMiddleware>();
+
+// Add credentials to the client
+var credentials = app.Services.GetRequiredService<IOptions<ApiCredentials>>().Value;
+var client = app.Services.GetRequiredService<SledzeniePortTypeClient>();
+client.ClientCredentials.UserName.UserName = credentials.Username;
+client.ClientCredentials.UserName.Password = credentials.Password;
+
+app.MapControllers();
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseSoapEndpoint<IPostApi>(path: "/PostApi.svc", new SoapEncoderOptions());
-
-app.MapGet("/welcome", (string name) => app.Services.GetRequiredService<IPostApi>().GetWelcomeMessage(name))
-    .WithName("welcome")
-    .WithOpenApi();
-app.MapGet("/version", () => app.Services.GetRequiredService<IPostApi>().GetVersion())
-    .WithName("version")
-    .WithOpenApi();
-app.MapPost("/checkLocalShipments",
-        (string[] numbers) => app.Services.GetRequiredService<IPostApi>().CheckLocalShipments(numbers))
-    .WithName("checkLocalShipments")
-    .WithOpenApi();
-app.MapPost("/checkShipments", 
-        (string[] numbers) => app.Services.GetRequiredService<IPostApi>().CheckShipments(numbers))
-    .WithName("checkShipments")
-    .WithOpenApi();
-app.MapGet("/checkSingleShipment",
-        (string number) => app.Services.GetRequiredService<IPostApi>().CheckSingleShipment(number))
-    .WithName("checkSingleShipment")
-    .WithOpenApi();
-app.MapPost("/checkSingleLocalShipment",
-        (string number) => app.Services.GetRequiredService<IPostApi>().CheckSingleLocalShipment(number))
-    .WithName("checkSingleLocalShipment")
-    .WithOpenApi();
-app.MapPost("/checkShipmentsByDate",
-        (string[] numbers, DateTime startDate, DateTime endDate) => 
-            app.Services.GetRequiredService<IPostApi>().CheckShipmentsByDate(numbers, startDate, endDate))
-    .WithName("checkShipmentsByDate")
-    .WithOpenApi();
-app.MapPost("/checkLocalShipmentsByDate",
-        (string[] numbers, DateTime startDate, DateTime endDate) => 
-            app.Services.GetRequiredService<IPostApi>().CheckLocalShipmentsByDate(numbers, startDate, endDate))
-    .WithName("checkLocalShipmentsByDate")
-    .WithOpenApi();
-app.MapGet("/getMaxShipments", () => app.Services.GetRequiredService<IPostApi>().GetMaxShipments())
-    .WithName("getMaxShipments")
-    .WithOpenApi();
-app.MapPost("/getSingleShipmentByBarCode", (byte[] imageData) =>
-        app.Services.GetRequiredService<IPostApi>().GetSingleShipmentByBarCode(imageData))
-    .WithName("getSingleShipmentByBarCode")
-    .WithOpenApi();
 
 app.Run();
