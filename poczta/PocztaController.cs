@@ -1,3 +1,4 @@
+using System.Text;
 using Microsoft.AspNetCore.Mvc;
 using poczta.Sledzenie;
 
@@ -37,7 +38,7 @@ public sealed class PocztaController(IPostApi postApi) : ControllerBase
         });
     }
     
-    [HttpPost("checkShipments")]
+    [HttpGet("checkShipments")]
     public async Task<IActionResult> CheckShipments(string[]? numbers)
     {
         if(numbers == null || numbers.Length == 0)
@@ -53,7 +54,7 @@ public sealed class PocztaController(IPostApi postApi) : ControllerBase
         });
     }
     
-    [HttpPost("checkLocalShipments")]
+    [HttpGet("checkLocalShipments")]
     public async Task<IActionResult> CheckLocalShipments(string[]? numbers)
     {
         if(numbers == null || numbers.Length == 0)
@@ -85,7 +86,7 @@ public sealed class PocztaController(IPostApi postApi) : ControllerBase
         });
     }
     
-    [HttpPost("checkSingleLocalShipment")]
+    [HttpGet("checkSingleLocalShipment")]
     public async Task<IActionResult> CheckSingleLocalShipment(string number)
     {
         if(string.IsNullOrEmpty(number))
@@ -102,12 +103,12 @@ public sealed class PocztaController(IPostApi postApi) : ControllerBase
     }
   
     [HttpPost("checkShipmentsByDate")]
-    public async Task<IActionResult> CheckShipmentsByDate(string[]? numbers, DateTime startDate, DateTime endDate)
+    public async Task<IActionResult> CheckShipmentsByDate([FromBody]ByDateRequest? request)
     {
-        if(numbers == null || numbers.Length == 0)
+        if(request?.Numbers == null || request.Numbers.Length == 0)
             return BadRequest("At least one number is required");
 
-        var result = await postApi.CheckShipmentsByDate(numbers, startDate, endDate);
+        var result = await postApi.CheckShipmentsByDate(request.Numbers, request.StartDate, request.EndDate);
         if (result.przesylki.Length == 0)
             return NotFound();
         
@@ -118,12 +119,12 @@ public sealed class PocztaController(IPostApi postApi) : ControllerBase
     }
    
     [HttpPost("checkLocalShipmentsByDate")]
-    public async Task<IActionResult> CheckLocalShipmentsByDate(string[]? numbers, DateTime startDate, DateTime endDate)
+    public async Task<IActionResult> CheckLocalShipmentsByDate([FromBody]ByDateRequest? request)
     {
-        if(numbers == null || numbers.Length == 0)
+        if(request?.Numbers == null || request.Numbers.Length == 0)
             return BadRequest("At least one number is required");
 
-        var result = await postApi.CheckLocalShipmentsByDate(numbers, startDate, endDate);
+        var result = await postApi.CheckLocalShipmentsByDate(request.Numbers, request.StartDate, request.EndDate);
         if (result.przesylki.Length == 0)
             return NotFound();
         
@@ -147,12 +148,25 @@ public sealed class PocztaController(IPostApi postApi) : ControllerBase
     }
     
     [HttpPost("getSingleShipmentByBarCode")]
-    public async Task<IActionResult> GetSingleShipmentByBarCode(byte[]? imageData)
+    public async Task<IActionResult> GetSingleShipmentByBarCode([FromBody]ByBarcodeRequest? request)
     {
-        if(imageData == null || imageData.Length == 0)
+        if(request?.ImageData == null || request.ImageData.Length == 0)
             return BadRequest("Image data is required");
 
-        var result = await postApi.GetSingleShipmentByBarCode(imageData);
+        if (request.ImageData.StartsWith("data:image/jpeg;base64,"))
+            request.ImageData = request.ImageData[23..];
+        
+        byte[] bytes;
+        try
+        {
+            bytes = Convert.FromBase64String(request.ImageData);
+        }
+        catch
+        {
+            return BadRequest("Image data is corrupted");
+        }
+        
+        var result = await postApi.GetSingleShipmentByBarCode(bytes);
         if (result.danePrzesylki == null)
             return NotFound();
         
