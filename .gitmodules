@@ -1,0 +1,4 @@
+[submodule "poczta_client_cpp"]
+	path = poczta_client_cpp
+	url = https://github.com/JungerBoyo/REST-rsi.git
+	branch = poczta-client
